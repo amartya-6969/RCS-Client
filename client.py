@@ -113,17 +113,17 @@ def _account_name(line):
 
 
 def _check_captcha(cookie, place_id):
-    """Check account status. Returns (status, meta) where status is 'captcha', 'clean', or 'error'."""
+    """Check account status. Returns (status, reason) where status is 'captcha', 'clean', or 'error'."""
     s = _new_session()
     s.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
 
     try:
         r = s.post("https://auth.roblox.com/v2/logout", timeout=10)
         if r.status_code == 401:
-            return "error", {}
+            return "error", "invalid cookie"
         csrf = r.headers.get("x-csrf-token", "")
         if not csrf:
-            return "error", {}
+            return "error", "no csrf"
         s.headers["x-csrf-token"] = csrf
 
         r2 = s.post(
@@ -150,8 +150,8 @@ def _check_captcha(cookie, place_id):
                 return "captcha", _extract_meta(r2.headers)
 
         return "clean", {}
-    except Exception:
-        pass
+    except Exception as e:
+        return "error", str(e)[:60]
     return "error", {}
 
 
@@ -296,6 +296,7 @@ def main():
         captcha_accounts = []
         clean_count = 0
         error_count = 0
+        error_reasons = {}
 
         def _check_one(acct):
             cookie = _extract_cookie(acct)
@@ -313,12 +314,17 @@ def main():
                 acct, status, meta = future.result()
                 if status == "error":
                     error_count += 1
+                    reason = meta if isinstance(meta, str) else "unknown"
+                    error_reasons[reason] = error_reasons.get(reason, 0) + 1
                 elif status == "captcha":
                     captcha_accounts.append(acct)
                 else:
                     clean_count += 1
 
         _log(f"{_GRN}{clean_count} clean{_RST}, {_YLW}{len(captcha_accounts)} captcha{_RST}, {_RED}{error_count} errors{_RST}")
+        if error_reasons:
+            breakdown = ", ".join(f"{v} {k}" for k, v in sorted(error_reasons.items(), key=lambda x: -x[1]))
+            _log(f"  {_RED}errors: {breakdown}{_RST}")
 
         if not captcha_accounts:
             _log(f"{_YLW}No captcha accounts. Waiting {_LOOP_DELAY}s...{_RST}")
