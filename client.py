@@ -113,31 +113,37 @@ def _check_captcha(cookie, place_id):
     s.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
 
     try:
-        r = s.post(
-            "https://auth.roblox.com/v2/logout",
-            headers={"x-csrf-token": _get_csrf(s)},
-            timeout=10,
-        )
-        # Check for captcha challenge headers
-        if r.headers.get("rblx-challenge-id"):
-            meta = {
-                "challenge_id": r.headers.get("rblx-challenge-id", ""),
-                "challenge_type": r.headers.get("rblx-challenge-type", ""),
-            }
-            return True, meta
+        # Get CSRF token via logout attempt
+        r = s.post("https://auth.roblox.com/v2/logout", timeout=10)
+        csrf = r.headers.get("x-csrf-token", "")
+        if not csrf:
+            return False, {}
+        s.headers["x-csrf-token"] = csrf
 
-        # Try join game to trigger captcha
+        # Join game to trigger captcha check
         r2 = s.post(
-            f"https://gamejoin.roblox.com/v1/multigame-place",
-            json={"placeId": place_id},
+            "https://gamejoin.roblox.com/v1/join-game",
+            json={"placeId": place_id, "isTeleport": False},
             timeout=10,
         )
-        if r2.headers.get("rblx-challenge-id"):
-            meta = {
-                "challenge_id": r2.headers.get("rblx-challenge-id", ""),
-                "challenge_type": r2.headers.get("rblx-challenge-type", ""),
-            }
-            return True, meta
+
+        # Check 403 with captcha headers (most common)
+        if r2.status_code == 403:
+            ctype = r2.headers.get("rblx-challenge-type", "")
+            raw_b64 = r2.headers.get("rblx-challenge-metadata", "")
+            if "captcha" in ctype.lower() or raw_b64:
+                meta = _extract_meta(r2.headers)
+                return True, meta
+
+        # Check 200 with body status==2 (captcha in response body)
+        if r2.status_code == 200:
+            try:
+                body = r2.json()
+            except Exception:
+                body = {}
+            if body.get("status") == 2:
+                meta = _extract_meta(r2.headers)
+                return True, meta
 
         return False, {}
     except Exception:
