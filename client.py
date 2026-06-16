@@ -113,15 +113,17 @@ def _account_name(line):
 
 
 def _check_captcha(cookie, place_id):
-    """Check if account has captcha by joining game."""
+    """Check account status. Returns (status, meta) where status is 'captcha', 'clean', or 'error'."""
     s = _new_session()
     s.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
 
     try:
         r = s.post("https://auth.roblox.com/v2/logout", timeout=10)
+        if r.status_code == 401:
+            return "error", {}
         csrf = r.headers.get("x-csrf-token", "")
         if not csrf:
-            return False, {}
+            return "error", {}
         s.headers["x-csrf-token"] = csrf
 
         r2 = s.post(
@@ -134,7 +136,7 @@ def _check_captcha(cookie, place_id):
             ctype = r2.headers.get("rblx-challenge-type", "")
             raw_b64 = r2.headers.get("rblx-challenge-metadata", "")
             if "captcha" in ctype.lower() or raw_b64:
-                return True, _extract_meta(r2.headers)
+                return "captcha", _extract_meta(r2.headers)
 
         if r2.status_code == 200:
             try:
@@ -142,12 +144,12 @@ def _check_captcha(cookie, place_id):
             except Exception:
                 body = {}
             if body.get("status") == 2:
-                return True, _extract_meta(r2.headers)
+                return "captcha", _extract_meta(r2.headers)
 
-        return False, {}
+        return "clean", {}
     except Exception:
         pass
-    return False, {}
+    return "error", {}
 
 
 def _get_csrf(session):
@@ -295,22 +297,20 @@ def main():
         def _check_one(acct):
             cookie = _extract_cookie(acct)
             if not cookie:
-                return acct, False, "bad cookie"
+                return acct, "error", "bad cookie"
             try:
-                has_captcha, meta = _check_captcha(cookie, place_id)
-                if has_captcha and meta.get("challenge_id"):
-                    return acct, True, None
-                return acct, False, None
+                status, meta = _check_captcha(cookie, place_id)
+                return acct, status, meta
             except Exception as e:
-                return acct, False, str(e)
+                return acct, "error", str(e)
 
         with ThreadPoolExecutor(max_workers=_CHECK_THREADS) as pool:
             futures = {pool.submit(_check_one, acct): acct for acct in accounts}
             for future in as_completed(futures):
-                acct, has_captcha, err = future.result()
-                if err:
+                acct, status, meta = future.result()
+                if status == "error":
                     error_count += 1
-                elif has_captcha:
+                elif status == "captcha":
                     captcha_accounts.append(acct)
                 else:
                     clean_count += 1
