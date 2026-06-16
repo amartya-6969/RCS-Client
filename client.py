@@ -86,7 +86,9 @@ def _extract_cookie(line):
     if not line or line.startswith("#"):
         return None
     if "_|WARNING:-" in line:
-        return line.split("|", 1)[0] if "|" in line else line
+        # Full cookie is everything from _|WARNING:- to end of line
+        idx = line.find("_|WARNING:-")
+        return line[idx:]
     if len(line) > 50:
         return line
     return None
@@ -113,37 +115,31 @@ def _check_captcha(cookie, place_id):
     s.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
 
     try:
-        # Get CSRF token via logout attempt
         r = s.post("https://auth.roblox.com/v2/logout", timeout=10)
         csrf = r.headers.get("x-csrf-token", "")
         if not csrf:
             return False, {}
         s.headers["x-csrf-token"] = csrf
 
-        # Join game to trigger captcha check
         r2 = s.post(
             "https://gamejoin.roblox.com/v1/join-game",
             json={"placeId": place_id, "isTeleport": False},
             timeout=10,
         )
 
-        # Check 403 with captcha headers (most common)
         if r2.status_code == 403:
             ctype = r2.headers.get("rblx-challenge-type", "")
             raw_b64 = r2.headers.get("rblx-challenge-metadata", "")
             if "captcha" in ctype.lower() or raw_b64:
-                meta = _extract_meta(r2.headers)
-                return True, meta
+                return True, _extract_meta(r2.headers)
 
-        # Check 200 with body status==2 (captcha in response body)
         if r2.status_code == 200:
             try:
                 body = r2.json()
             except Exception:
                 body = {}
             if body.get("status") == 2:
-                meta = _extract_meta(r2.headers)
-                return True, meta
+                return True, _extract_meta(r2.headers)
 
         return False, {}
     except Exception:
