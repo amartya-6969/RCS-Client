@@ -26,7 +26,10 @@ except ImportError:
         return _fallback_requests.Session()
 
 # ── Config ──
-_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    _SCRIPT_DIR = os.path.dirname(sys.executable)
+else:
+    _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_SCRIPT_DIR, "config.json")
 _ACCOUNTS_PATH = os.path.join(_SCRIPT_DIR, "accounts.txt")
 _LOOP_DELAY = 60

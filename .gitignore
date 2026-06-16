@@ -1,4 +1,6 @@
-config.json
 accounts.txt
 __pycache__/
 *.pyc
+build/
+dist/
+*.spec
