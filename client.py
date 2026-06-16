@@ -138,6 +138,9 @@ def _check_captcha(cookie, place_id):
             if "captcha" in ctype.lower() or raw_b64:
                 return "captcha", _extract_meta(r2.headers)
 
+        if r2.status_code == 529:
+            return "error", "roblox down (529)"
+
         if r2.status_code == 200:
             try:
                 body = r2.json()
