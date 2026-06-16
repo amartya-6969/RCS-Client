@@ -1,0 +1,4 @@
+config.json
+accounts.txt
+__pycache__/
+*.pyc
