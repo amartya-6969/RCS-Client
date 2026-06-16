@@ -81,12 +81,13 @@ def _sanitize(err):
 
 
 def _extract_cookie(line):
-    """Extract .ROBLOSECURITY cookie from account line."""
+    """Extract .ROBLOSECURITY cookie from account line. Handles: cookie, user:pass:cookie"""
     line = line.strip()
     if not line or line.startswith("#"):
         return None
+    # user:pass:cookie format — extract cookie (last segment after :)
     if "_|WARNING:-" in line:
-        # Full cookie is everything from _|WARNING:- to end of line
+        # Find the actual cookie start
         idx = line.find("_|WARNING:-")
         return line[idx:]
     if len(line) > 50:
@@ -94,19 +95,21 @@ def _extract_cookie(line):
     return None
 
 
-def _cookie_display(cookie):
-    """Get short display name from cookie."""
-    if "_|WARNING:-" in cookie:
-        # Cookie format: _|WARNING:-USERID-USERID-USERID|...
-        parts = cookie.split("|")
-        if parts:
-            uid_part = parts[0].replace("_|WARNING:-", "")
-            # Get last segment as display name
-            segments = uid_part.split("-")
-            if len(segments) >= 2:
-                return segments[-1][:12]
-            return uid_part[:12]
-    return cookie[:12]
+def _account_name(line):
+    """Get display name from account line. Handles: cookie, user:pass:cookie"""
+    line = line.strip()
+    # user:pass:cookie — use username
+    if "_|WARNING:-" not in line and ":" in line:
+        return line.split(":")[0]
+    # Cookie format: _|WARNING:-USERID-USERID-USERID|...
+    if "_|WARNING:-" in line:
+        idx = line.find("_|WARNING:-")
+        uid_part = line[idx:].split("|")[0].replace("_|WARNING:-", "")
+        segments = uid_part.split("-")
+        if len(segments) >= 2:
+            return segments[-1][:12]
+        return uid_part[:12]
+    return line[:12]
 
 
 def _check_captcha(cookie, place_id):
@@ -203,11 +206,7 @@ def _submit_accounts(cfg, accounts):
     id_to_name = {}
     for i, aid in enumerate(account_ids):
         if i < len(accounts):
-            cookie = _extract_cookie(accounts[i])
-            if cookie:
-                id_to_name[aid] = _cookie_display(cookie)
-            else:
-                id_to_name[aid] = aid[:12]
+            id_to_name[aid] = _account_name(accounts[i])
         else:
             id_to_name[aid] = aid[:12]
 
