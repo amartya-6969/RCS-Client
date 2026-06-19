@@ -34,6 +34,7 @@ _CONFIG_PATH = os.path.join(_SCRIPT_DIR, "config.json")
 _ACCOUNTS_PATH = os.path.join(_SCRIPT_DIR, "accounts.txt")
 _LOOP_DELAY = 60
 _POLL_TIMEOUT = 600
+_ACCOUNT_TIMEOUT = 300   # drop individual account if stuck > 5 min
 _CHECK_THREADS = 20
 
 # ── Colors ──
@@ -352,22 +353,54 @@ def main():
 
         # Step 3: Poll results continuously
         pending = set(account_ids)
+        submit_times = {aid: time.time() for aid in account_ids}  # per-account timestamp
         total_solved = 0
         total_failed = 0
         total_clean = 0
         start_time = time.time()
         poll_session = _new_session()
+        poll_fail_count = 0
 
         while pending:
             if time.time() - start_time > _POLL_TIMEOUT:
                 _log(f"  {_RED}Poll timeout ({_POLL_TIMEOUT}s) - {len(pending)} accounts still pending{_RST}")
+                for aid in list(pending):
+                    name = id_to_name.get(aid, aid[:12])
+                    total_failed += 1
+                    print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}poll timeout{_RST}")
                 break
 
             results = _poll_results(cfg, list(pending), session=poll_session)
 
+            if not results and pending:
+                poll_fail_count += 1
+                if poll_fail_count >= 5:
+                    _log(f"  {_RED}5 consecutive poll failures — dropping {len(pending)} stuck accounts{_RST}")
+                    for aid in list(pending):
+                        name = id_to_name.get(aid, aid[:12])
+                        total_failed += 1
+                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}server unreachable{_RST}")
+                    pending.clear()
+                    break
+                if pending:
+                    time.sleep(2)
+                    continue
+            else:
+                poll_fail_count = 0
+
             for aid in list(pending):
                 r = results.get(aid, {})
-                status = r.get("status", "queued")
+                status = r.get("status", "")
+
+                # Per-account timeout — drop accounts stuck in non-terminal state
+                if status not in ("solved", "failed", "clean") and status != "":
+                    elapsed = time.time() - submit_times.get(aid, start_time)
+                    if elapsed > _ACCOUNT_TIMEOUT:
+                        pending.discard(aid)
+                        name = id_to_name.get(aid, aid[:12])
+                        total_failed += 1
+                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}stuck ({elapsed:.0f}s, status={status}){_RST}")
+                        continue
 
                 if status in ("solved", "failed", "clean"):
                     pending.discard(aid)
