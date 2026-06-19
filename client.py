@@ -98,9 +98,10 @@ def _extract_cookie(line):
 def _account_name(line):
     """Get display name from account line. Handles: cookie, user:pass:cookie"""
     line = line.strip()
-    # user:pass:cookie — use username
-    if "_|WARNING:-" not in line and ":" in line:
-        return line.split(":")[0]
+    # user:pass:cookie — use username (first field before first colon)
+    parts = line.split(":")
+    if len(parts) >= 3:
+        return parts[0][:16]
     # Cookie format: _|WARNING:-USERID-USERID-USERID|...
     if "_|WARNING:-" in line:
         idx = line.find("_|WARNING:-")
