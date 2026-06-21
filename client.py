@@ -120,7 +120,7 @@ def _check_captcha(cookie, place_id):
     s.cookies.set(".ROBLOSECURITY", cookie, domain=".roblox.com")
 
     try:
-        r = s.post("https://auth.roblox.com/v2/logout", timeout=10)
+        r = s.post("https://auth.roblox.com/v2/logout", timeout=15)
         if r.status_code == 401:
             return "error", "invalid cookie"
         csrf = r.headers.get("x-csrf-token", "")
@@ -131,7 +131,7 @@ def _check_captcha(cookie, place_id):
         r2 = s.post(
             "https://gamejoin.roblox.com/v1/join-game",
             json={"placeId": place_id, "isTeleport": False},
-            timeout=10,
+            timeout=15,
         )
 
         if r2.status_code == 403:
