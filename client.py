@@ -399,7 +399,7 @@ def main():
                         pending.discard(aid)
                         name = id_to_name.get(aid, aid[:12])
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}stuck ({elapsed:.0f}s, status={status}){_RST}")
+                        print(f"    {_ts()}  {name}  {_YLW}timeout{_RST}  {_GRY}stuck ({elapsed:.0f}s, status={status}){_RST}")
                         continue
 
                 if status in ("solved", "failed", "clean"):
