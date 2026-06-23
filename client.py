@@ -393,7 +393,8 @@ def main():
                 status = r.get("status", "")
 
                 # Per-account timeout — drop accounts stuck in non-terminal state
-                if status not in ("solved", "failed", "clean") and status != "":
+                # But NOT "queued" — they're just waiting for a worker, not stuck
+                if status not in ("solved", "failed", "clean", "queued") and status != "":
                     elapsed = time.time() - submit_times.get(aid, start_time)
                     if elapsed > _ACCOUNT_TIMEOUT:
                         pending.discard(aid)
@@ -421,7 +422,12 @@ def main():
                 time.sleep(2)
 
         elapsed_total = time.time() - start_time
-        print(f"  {_BLD}Done{_RST}: {_GRN}{total_solved} solved{_RST}, {_RED}{total_failed} failed{_RST}, {_GRN}{total_clean} clean{_RST}, {_GRY}{elapsed_total:.0f}s{_RST}")
+        queued_remaining = len(pending)
+        done_line = f"  {_BLD}Done{_RST}: {_GRN}{total_solved} solved{_RST}, {_RED}{total_failed} failed{_RST}, {_GRN}{total_clean} clean{_RST}"
+        if queued_remaining > 0:
+            done_line += f", {_YLW}{queued_remaining} still in queue{_RST}"
+        done_line += f", {_GRY}{elapsed_total:.0f}s{_RST}"
+        print(done_line)
 
         # Show updated balance
         balance = _check_balance(cfg)
