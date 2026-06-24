@@ -403,7 +403,7 @@ def main():
                         print(f"    {_ts()}  {name}  {_YLW}timeout{_RST}  {_GRY}stuck ({elapsed:.0f}s, status={status}){_RST}")
                         continue
 
-                if status in ("solved", "failed", "clean"):
+                if status in ("solved", "failed", "clean", "rate_limited"):
                     pending.discard(aid)
                     reason = r.get("reason", "")
                     name = id_to_name.get(aid, aid[:12])
@@ -417,6 +417,9 @@ def main():
                     elif status == "clean":
                         total_clean += 1
                         print(f"    {_ts()}  {name}  {_GRN}clean{_RST}  {_GRY}{reason}{_RST}")
+                    elif status == "rate_limited":
+                        total_failed += 1
+                        print(f"    {_ts()}  {name}  {_YLW}ratelimit{_RST}  {_GRY}{reason[:60]}{_RST}")
 
             if pending:
                 time.sleep(2)
