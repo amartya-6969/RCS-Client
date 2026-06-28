@@ -411,16 +411,16 @@ def main():
                     if status == "solved":
                         total_solved += 1
                         elapsed = r.get("elapsed", 0)
-                        print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}  {_GRY}({elapsed:.0f}s){_RST}")
+                        print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}  {_GRY}({elapsed:.0f}s){_RST}  {_GRY}[{total_solved}/{len(account_ids)}]{_RST}")
                     elif status == "failed":
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_RED}Failed{_RST}")
+                        print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
                     elif status == "clean":
                         total_clean += 1
-                        print(f"    {_ts()}  {name}  {_GRN}Clean{_RST}")
+                        print(f"    {_ts()}  {name}  {_GRN}Clean{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
                     elif status == "rate_limited":
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_YLW}Ratelimit{_RST}")
+                        print(f"    {_ts()}  {name}  {_YLW}Ratelimit{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
 
             if pending:
                 time.sleep(2)
