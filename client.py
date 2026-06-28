@@ -411,7 +411,7 @@ def main():
                     if status == "solved":
                         total_solved += 1
                         elapsed = r.get("elapsed", 0)
-                        print(f"    {_ts()}  {name}  {_GRN}solved{_RST}  {_GRY}{elapsed:.0f}s{_RST}")
+                        print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}  {_GRY}({elapsed:.0f}s){_RST}")
                     elif status == "failed":
                         total_failed += 1
                         print(f"    {_ts()}  {name}  {_RED}failed{_RST}")
