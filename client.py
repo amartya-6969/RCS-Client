@@ -411,7 +411,16 @@ def main():
                     if status == "solved":
                         total_solved += 1
                         elapsed = r.get("elapsed", 0)
-                        print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}  {_GRY}({elapsed:.0f}s){_RST}  {_GRY}[{total_solved}/{len(account_ids)}]{_RST}")
+                        reason = r.get("reason", "")
+                        # Extract rounds from reason like "Solved in 5 rounds (63s)"
+                        rounds_str = ""
+                        if "rounds" in reason:
+                            try:
+                                rnd = reason.split("rounds")[0].split()[-1]
+                                rounds_str = f" {rnd}r"
+                            except (ValueError, IndexError):
+                                pass
+                        print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}{rounds_str}  {_GRY}({elapsed:.0f}s){_RST}  {_GRY}[{total_solved}/{len(account_ids)}]{_RST}")
                     elif status == "failed":
                         total_failed += 1
                         print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
