@@ -367,7 +367,7 @@ def main():
                 for aid in list(pending):
                     name = id_to_name.get(aid, aid[:12])
                     total_failed += 1
-                    print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}poll timeout{_RST}")
+                    print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}poll timeout{_RST}")
                 break
 
             results = _poll_results(cfg, list(pending), session=poll_session)
@@ -379,7 +379,7 @@ def main():
                     for aid in list(pending):
                         name = id_to_name.get(aid, aid[:12])
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}server unreachable{_RST}")
+                        print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}server unreachable{_RST}")
                     pending.clear()
                     break
                 if pending:
