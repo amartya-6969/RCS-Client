@@ -410,16 +410,17 @@ def main():
 
                     if status == "solved":
                         total_solved += 1
-                        print(f"    {_ts()}  {name}  {_GRN}solved{_RST}  {_GRY}{reason}{_RST}")
+                        elapsed = r.get("elapsed", 0)
+                        print(f"    {_ts()}  {name}  {_GRN}solved{_RST}  {_GRY}{elapsed:.0f}s{_RST}")
                     elif status == "failed":
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}  {_GRY}{reason[:60]}{_RST}")
+                        print(f"    {_ts()}  {name}  {_RED}failed{_RST}")
                     elif status == "clean":
                         total_clean += 1
-                        print(f"    {_ts()}  {name}  {_GRN}clean{_RST}  {_GRY}{reason}{_RST}")
+                        print(f"    {_ts()}  {name}  {_GRN}clean{_RST}")
                     elif status == "rate_limited":
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_YLW}ratelimit{_RST}  {_GRY}{reason[:60]}{_RST}")
+                        print(f"    {_ts()}  {name}  {_YLW}ratelimit{_RST}")
 
             if pending:
                 time.sleep(2)
