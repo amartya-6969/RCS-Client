@@ -417,7 +417,7 @@ def main():
                         if "rounds" in reason:
                             try:
                                 rnd = reason.split("rounds")[0].split()[-1]
-                                rounds_str = f" {rnd}r"
+                                rounds_str = f" {rnd}R"
                             except (ValueError, IndexError):
                                 pass
                         print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}{rounds_str}  {_GRY}({elapsed:.0f}s){_RST}  {_GRY}[{total_solved}/{len(account_ids)}]{_RST}")
