@@ -392,9 +392,10 @@ def main():
                 r = results.get(aid, {})
                 status = r.get("status", "")
 
-                # Per-account timeout — drop accounts stuck in non-terminal state
-                # But NOT "queued" — they're just waiting for a worker, not stuck
-                if status not in ("solved", "failed", "clean", "queued") and status != "":
+                # Per-account timeout — only for truly unknown statuses.
+                # "solving" means server IS working on it (server handles its own 180s timeout).
+                # "queued", "timeout" also resolved server-side.
+                if status not in ("solved", "failed", "clean", "queued", "solving", "timeout") and status != "":
                     elapsed = time.time() - submit_times.get(aid, start_time)
                     if elapsed > _ACCOUNT_TIMEOUT:
                         pending.discard(aid)
