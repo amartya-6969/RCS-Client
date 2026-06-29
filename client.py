@@ -423,7 +423,11 @@ def main():
                         print(f"    {_ts()}  {name}  {_GRN}Solved{_RST}{rounds_str}  {_GRY}({elapsed:.0f}s){_RST}  {_GRY}[{total_solved}/{len(account_ids)}]{_RST}")
                     elif status == "failed":
                         total_failed += 1
-                        print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
+                        # Check if captcha solved but gamejoin failed
+                        if "gamejoin=" in reason and ("Continue 200" in reason or "Continue 201" in reason):
+                            print(f"    {_ts()}  {name}  {_YLW}Solved (gamejoin error){_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
+                        else:
+                            print(f"    {_ts()}  {name}  {_RED}Failed{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
                     elif status == "clean":
                         total_clean += 1
                         print(f"    {_ts()}  {name}  {_GRN}Clean{_RST}  {_GRY}[{total_solved}/{len(account_ids)} solved]{_RST}")
