@@ -19,7 +19,9 @@ init()
 try:
     from curl_cffi import requests as cffi_requests
     def _new_session():
-        return cffi_requests.Session(impersonate="chrome")
+        s = cffi_requests.Session(impersonate="chrome")
+        s.verify = False
+        return s
 except ImportError:
     import requests as _fallback_requests
     def _new_session():
